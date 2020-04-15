@@ -1,13 +1,20 @@
 package com.kush.zomatoaggregator.ui
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Context
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.util.TypedValue
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.getDrawableOrThrow
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputLayout
 import com.kush.zomatoaggregator.R
 import com.kush.zomatoaggregator.databinding.ActivityMainBinding
 import com.kush.zomatoaggregator.network.NetworkHelper
@@ -85,6 +92,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initSearch() {
+        binding.tilSearch.endIconDrawable = getProgressBarDrawable()
+        binding.tilSearch.setEndIconTintList(ContextCompat.getColorStateList(this, R.color.color_search_end_icon_state))
+
         val eventsSearchDisposable = createTextChangeObservable()
             .debounce(300, TimeUnit.MILLISECONDS)
             .filter { query -> ((query.isNotBlank()) || query.isEmpty()) }
@@ -103,9 +113,25 @@ class MainActivity : AppCompatActivity() {
         disposable?.add(eventsSearchDisposable)
     }
 
+    private fun Context.getProgressBarDrawable(): Drawable {
+        val value = TypedValue()
+        theme.resolveAttribute(android.R.attr.progressBarStyleSmall, value, false)
+        val progressBarStyle = value.data
+        val attributes = intArrayOf(android.R.attr.indeterminateDrawable)
+        val array = obtainStyledAttributes(progressBarStyle, attributes)
+        val drawable = array.getDrawableOrThrow(0)
+        array.recycle()
+        drawable.setTintList(ContextCompat.getColorStateList(this, R.color.color_search_end_icon_state))
+        return drawable
+    }
+
     private fun processSearchResponse(response: Model.SearchResponse?) {
+        (binding.tilSearch.endIconDrawable as? Animatable)?.stop()
+        binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CLEAR_TEXT
+        binding.tilSearch.endIconDrawable = ContextCompat.getDrawable(this, R.drawable.ic_clear_black_24dp)
         response?.let {
             searchList.clear()
+            listHashMap.clear()
             it.restaurants?.forEach { restaurantsItem ->
                 Log.d("TAG", "${restaurantsItem?.restaurant?.name} : ${restaurantsItem?.restaurant?.id}")
                 restaurantsItem?.restaurant?.let {restaurantData ->
@@ -184,6 +210,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun searchEventList(searchText : String): Observable<Model.SearchResponse>? {
         return if (networkHelper.isNetworkConnected()) {
+            runOnUiThread {
+                binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CUSTOM
+                binding.tilSearch.endIconDrawable = getProgressBarDrawable()
+                (binding.tilSearch.endIconDrawable as? Animatable)?.start()
+            }
             NetworkService.instance.search(query = searchText)
         } else {
             getString(R.string.text_common_processing_error)

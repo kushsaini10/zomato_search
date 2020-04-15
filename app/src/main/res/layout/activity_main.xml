@@ -42,6 +42,8 @@
         android:layout_marginHorizontal="16dp"
         app:boxStrokeColor="@color/color_search_border_state"
         app:hintEnabled="false"
+        app:endIconMode="custom"
+        app:endIconTint="@color/color_search_end_icon_state"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cb_theme"

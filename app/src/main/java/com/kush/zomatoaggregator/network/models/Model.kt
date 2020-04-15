@@ -90,6 +90,7 @@ object Model {
         }
 
         override fun equals(other: Any?): Boolean {
+            if (this === other) return true
             if (other is SearchListItem) {
                 return id == other.id
             }
