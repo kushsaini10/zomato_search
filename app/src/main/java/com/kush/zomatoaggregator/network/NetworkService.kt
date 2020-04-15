@@ -51,7 +51,7 @@ class RequestInterceptor: Interceptor {
         // Request customization: add request headers
         val requestBuilder = original.newBuilder()
             .header("Content-Type", "application/json")
-            .header("user-key", "cfcc581d0ea10817ba96ef17ae9928b1")
+            .header("user-key", BuildConfig.api_key)
 
         val request = requestBuilder.build()
 
