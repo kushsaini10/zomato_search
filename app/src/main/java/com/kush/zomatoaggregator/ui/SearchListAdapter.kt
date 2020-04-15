@@ -79,7 +79,7 @@ class SearchListAdapter(
                     searchListItem.averageCostForTwo != null &&
                             searchListItem.averageCostForTwo != 0
                 holder.binding.tvAvgPrice.text = context.getString(
-                    R.string.text_restaturant_price,
+                    R.string.text_restaurant_price,
                     searchListItem.currency,
                     searchListItem.averageCostForTwo
                 )

@@ -12,6 +12,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/MyTheme.DayNight">
+        <meta-data
+            android:name="android.max_aspect"
+            android:value="2.1" />
         <activity android:name=".ui.SearchActivity"
             android:theme="@style/MyTheme.DayNight">
             <intent-filter>

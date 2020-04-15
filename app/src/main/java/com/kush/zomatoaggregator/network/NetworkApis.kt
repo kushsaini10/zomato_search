@@ -13,6 +13,6 @@ interface NetworkApis {
         @Query(ApiRequestParams.ENTITY_ID) entityId: Int = 1,
         @Query(ApiRequestParams.ENTITY_TYPE) entityType: String = "city",
         @Query(ApiRequestParams.START) start: Int = 0,
-        @Query(ApiRequestParams.COUNT) count: Int = 10
+        @Query(ApiRequestParams.COUNT) count: Int = 20
     ): Observable<Model.SearchResponse>
 }

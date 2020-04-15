@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.getDrawableOrThrow
+import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,6 +40,7 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
     private lateinit var disposable: CompositeDisposable
     private lateinit var networkHelper: NetworkHelper
     private var searchList: MutableList<Model.SearchListItem> = mutableListOf()
+    private lateinit var listOfSuggestions: Array<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,19 +65,21 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
         try {
             startActivity(mapIntent)
         } catch (error: ActivityNotFoundException) {
-            showToast("No app found to resolve this action.")
+            showToast(getString(R.string.text_error_no_maps_app))
         }
     }
 
     private fun initVariables() {
         disposable = CompositeDisposable()
         networkHelper = NetworkHelper(applicationContext)
+        listOfSuggestions = resources.getStringArray(R.array.search_suggestions)
     }
 
     private fun initViews() {
         initThemeButton()
         initSearch()
         initList()
+        initSuggestionButton()
     }
 
     private fun initViewModel() {
@@ -93,6 +97,7 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
         viewModel.searchResultList.observe(this, Observer {
             it?.let {
                 (binding.rvSearch.adapter as? SearchListAdapter)?.setData(it)
+                updateSuggestionVisibility()
             }
         })
         viewModel.errorMessage.observe(this, Observer {
@@ -137,6 +142,17 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
         }
         binding.btnTop.setOnClickListener {
             binding.rvSearch.smoothScrollToPosition(0)
+        }
+    }
+
+    private fun initSuggestionButton() {
+        updateSuggestionText()
+        binding.btnSearchSuggestion.setOnClickListener {
+            val suggestionText = binding.btnSearchSuggestion.text.toString().replace("Search ", "")
+            binding.etSearch.setText(
+                suggestionText
+            )
+            binding.etSearch.setSelection(suggestionText.length)
         }
     }
 
@@ -207,6 +223,17 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
                 binding.etSearch.removeTextChangedListener(textWatcher)
             }
         }
+    }
+
+    private fun updateSuggestionVisibility() {
+        binding.groupSuggestion.isVisible = searchList.size == 0
+        if (binding.groupSuggestion.isVisible) {
+            updateSuggestionText()
+        }
+    }
+
+    private fun updateSuggestionText() {
+        binding.btnSearchSuggestion.text = getString(R.string.text_btn_suggestion, listOfSuggestions.random())
     }
 
     private fun processError(message: String?) {

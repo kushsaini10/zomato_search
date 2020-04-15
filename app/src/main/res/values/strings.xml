@@ -1,9 +1,22 @@
 <resources>
-    <string name="app_name">Zomato Aggregator</string>
+    <string name="app_name">Zomato Search</string>
     <string name="text_hint_search_restaurants">Search Restaurants in Delhi</string>
     <string name="text_common_processing_error">Something went wrong!</string>
     <string name="text_tool_tip_to_top">Back to top</string>
     <string name="text_tool_tip_change_theme">Toggle theme</string>
     <string name="text_error_no_internet">No internet connection!</string>
-    <string name="text_restaturant_price">%s %d for</string>
+    <string name="text_restaurant_price">%s %d for</string>
+    <string name="text_feeling_a_bit_empty">Feeling a bit empty!</string>
+    <string name="text_error_no_maps_app">No app found to resolve this action.</string>
+    <string name="text_btn_suggestion">Search %s</string>
+
+    <string-array name="search_suggestions">
+        <item>Dal Makhni</item>
+        <item>Sahi Paneer</item>
+        <item>Burger</item>
+        <item>Nachos</item>
+        <item>Pizza</item>
+        <item>Aloo Chat</item>
+        <item>Chole Bhature</item>
+    </string-array>
 </resources>
