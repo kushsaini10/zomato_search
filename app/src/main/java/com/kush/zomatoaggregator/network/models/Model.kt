@@ -92,9 +92,13 @@ object Model {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other is SearchListItem) {
-                return id == other.id
+                return id == other.id && cuisine == other.cuisine && name == other.name
             }
             return super.equals(other)
+        }
+
+        override fun hashCode(): Int {
+            return Objects.hash(id, name, cuisine)
         }
     }
 }
