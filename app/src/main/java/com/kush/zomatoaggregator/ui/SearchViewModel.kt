@@ -89,7 +89,9 @@ class SearchViewModel(
 
     private fun addUniqueCuisines(cuisines: String?): List<String>? {
         cuisines?.let {
-            return it.split(",")
+            return it.split(",").map {cuisine ->
+                cuisine.trim()
+            }
         }
         return null
     }
