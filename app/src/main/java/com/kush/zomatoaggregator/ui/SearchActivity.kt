@@ -6,47 +6,44 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.util.TypedValue
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.getDrawableOrThrow
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputLayout
 import com.kush.zomatoaggregator.R
-import com.kush.zomatoaggregator.databinding.ActivityMainBinding
+import com.kush.zomatoaggregator.databinding.ActivitySearchBinding
 import com.kush.zomatoaggregator.network.NetworkHelper
-import com.kush.zomatoaggregator.network.NetworkService
 import com.kush.zomatoaggregator.network.models.Model
 import com.kush.zomatoaggregator.util.Utils
 import com.kush.zomatoaggregator.util.showToast
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
-class MainActivity : AppCompatActivity() {
-
-    companion object{
-        private const val otherCuisine = "Other"
-    }
-
-    private lateinit var binding: ActivityMainBinding
-    private var disposable: CompositeDisposable? = null
+class SearchActivity : AppCompatActivity() {
+    private lateinit var binding: ActivitySearchBinding
+    private lateinit var viewModelFactory: SearchViewModelProviderFactory
+    private lateinit var viewModel: SearchViewModel
+    private lateinit var disposable: CompositeDisposable
     private lateinit var networkHelper: NetworkHelper
     private var searchList: MutableList<Model.SearchListItem> = mutableListOf()
-    private lateinit var listHashMap: HashMap<String, HashSet<Model.SearchListItem>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivitySearchBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
         initVariables()
         initViews()
+        initViewModel()
+        initObservables()
     }
 
     override fun onDestroy() {
@@ -57,7 +54,6 @@ class MainActivity : AppCompatActivity() {
     private fun initVariables() {
         disposable = CompositeDisposable()
         networkHelper = NetworkHelper(this)
-        listHashMap = hashMapOf()
     }
 
     private fun initViews() {
@@ -66,9 +62,43 @@ class MainActivity : AppCompatActivity() {
         initList()
     }
 
+    private fun initViewModel() {
+        viewModelFactory = SearchViewModelProviderFactory(disposable, networkHelper)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(SearchViewModel::class.java)
+        viewModel.onCreate()
+    }
+
+    private fun initObservables() {
+        viewModel.isSearching.observe(this, Observer {
+            it?.let {
+                if (it) {
+                    binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CUSTOM
+                    binding.tilSearch.endIconDrawable = getProgressBarDrawable()
+                    (binding.tilSearch.endIconDrawable as? Animatable)?.start()
+                } else {
+                    (binding.tilSearch.endIconDrawable as? Animatable)?.stop()
+                    binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CLEAR_TEXT
+                    binding.tilSearch.endIconDrawable = ContextCompat.getDrawable(this, R.drawable.ic_clear_black_24dp)
+                }
+            }
+        })
+        viewModel.searchResultList.observe(this, Observer {
+            it?.let {
+                searchList.clear()
+                searchList.addAll(it)
+                binding.rvSearch.adapter?.notifyDataSetChanged()
+            }
+        })
+        viewModel.errorMessage.observe(this, Observer {
+            it?.let {
+                showToast(getString(it))
+            }
+        })
+    }
+
     private fun initThemeButton() {
         binding.cbTheme.apply {
-            isChecked = Utils.isDarkTheme(this@MainActivity)
+            isChecked = Utils.isDarkTheme(this@SearchActivity)
             setOnCheckedChangeListener { _, isChecked ->
                 AppCompatDelegate.setDefaultNightMode(
                     if (isChecked)
@@ -83,8 +113,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun initList() {
         binding.rvSearch.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity, RecyclerView.VERTICAL, false)
-            adapter = SearchListAdapter(this@MainActivity, searchList)
+            layoutManager = LinearLayoutManager(this@SearchActivity, RecyclerView.VERTICAL, false)
+            adapter = SearchListAdapter(this@SearchActivity, searchList)
         }
         binding.btnTop.setOnClickListener {
             binding.rvSearch.smoothScrollToPosition(0)
@@ -99,12 +129,9 @@ class MainActivity : AppCompatActivity() {
             .debounce(300, TimeUnit.MILLISECONDS)
             .filter { query -> ((query.isNotBlank()) || query.isEmpty()) }
             .distinctUntilChanged()
-            .switchMap { query ->
-                searchEventList(query)?.subscribeOn(Schedulers.io())
-            }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ result ->
-                processSearchResponse(result)
+                viewModel.onSearchQueryChange(result)
             }, { throwable ->
                 throwable.printStackTrace()
                 processError(null)
@@ -125,68 +152,6 @@ class MainActivity : AppCompatActivity() {
         return drawable
     }
 
-    private fun processSearchResponse(response: Model.SearchResponse?) {
-        (binding.tilSearch.endIconDrawable as? Animatable)?.stop()
-        binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CLEAR_TEXT
-        binding.tilSearch.endIconDrawable = ContextCompat.getDrawable(this, R.drawable.ic_clear_black_24dp)
-        response?.let {
-            searchList.clear()
-            listHashMap.clear()
-            it.restaurants?.forEach { restaurantsItem ->
-                Log.d("TAG", "${restaurantsItem?.restaurant?.name} : ${restaurantsItem?.restaurant?.id}")
-                restaurantsItem?.restaurant?.let {restaurantData ->
-                    val parsedCuisines = addUniqueCuisines(restaurantData.cuisines)
-                    addRestaurantToCuisineGroup(restaurantData, parsedCuisines)
-                }
-            }
-            listHashMap.entries.forEach { entry ->
-                searchList.add(Model.SearchListItem(itemType = Model.SearchListItem.Type.CUISINE, cuisine = entry.key))
-                searchList.addAll(entry.value)
-            }
-        }
-        binding.rvSearch.adapter?.notifyDataSetChanged()
-    }
-
-    private fun addUniqueCuisines(cuisines: String?): List<String>? {
-        cuisines?.let {
-            return it.split(",")
-        }
-        return null
-    }
-
-    private fun addRestaurantToCuisineGroup(
-        restaurantData: Model.SearchResponse.Restaurant,
-        parsedCuisines: List<String>?
-    ) {
-        if (parsedCuisines.isNullOrEmpty()) {
-            addCuisineAndRestaurant(otherCuisine, restaurantData)
-        } else {
-            parsedCuisines.forEach { cuisine ->
-                addCuisineAndRestaurant(cuisine, restaurantData)
-            }
-        }
-    }
-
-    private fun addCuisineAndRestaurant(
-        cuisine: String,
-        restaurantData: Model.SearchResponse.Restaurant
-    ) {
-        val restaurantHashSet =
-            listHashMap[cuisine]
-        if (restaurantHashSet == null) {
-            listHashMap[cuisine] = hashSetOf()
-        }
-        listHashMap[cuisine]?.add(
-            Model.SearchListItem(
-                itemType = Model.SearchListItem.Type.RESTAURANT,
-                id = restaurantData.id,
-                name = restaurantData.name ?: "",
-                cuisine = cuisine,
-                imageUrl = restaurantData.thumb
-            )
-        )
-    }
-
     private fun createTextChangeObservable(): Observable<String> {
         return Observable.create { emitter ->
             val textWatcher = object : TextWatcher {
@@ -205,20 +170,6 @@ class MainActivity : AppCompatActivity() {
             emitter.setCancellable {
                 binding.etSearch.removeTextChangedListener(textWatcher)
             }
-        }
-    }
-
-    private fun searchEventList(searchText : String): Observable<Model.SearchResponse>? {
-        return if (networkHelper.isNetworkConnected()) {
-            runOnUiThread {
-                binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CUSTOM
-                binding.tilSearch.endIconDrawable = getProgressBarDrawable()
-                (binding.tilSearch.endIconDrawable as? Animatable)?.start()
-            }
-            NetworkService.instance.search(query = searchText)
-        } else {
-            getString(R.string.text_common_processing_error)
-            null
         }
     }
 

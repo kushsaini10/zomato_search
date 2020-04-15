@@ -4,4 +4,5 @@
     <string name="text_common_processing_error">Something went wrong!</string>
     <string name="text_tool_tip_to_top">Back to top</string>
     <string name="text_tool_tip_change_theme">Toggle theme</string>
+    <string name="text_error_no_internet">No internet connection!</string>
 </resources>
