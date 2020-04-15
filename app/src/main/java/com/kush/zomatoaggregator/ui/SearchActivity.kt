@@ -53,7 +53,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun initVariables() {
         disposable = CompositeDisposable()
-        networkHelper = NetworkHelper(this)
+        networkHelper = NetworkHelper(applicationContext)
     }
 
     private fun initViews() {
