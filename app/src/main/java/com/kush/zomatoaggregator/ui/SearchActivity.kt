@@ -62,7 +62,7 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
         val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
         try {
             startActivity(mapIntent)
-        }catch (error: ActivityNotFoundException) {
+        } catch (error: ActivityNotFoundException) {
             showToast("No app found to resolve this action.")
         }
     }
@@ -87,15 +87,7 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
     private fun initObservables() {
         viewModel.isSearching.observe(this, Observer {
             it?.let {
-                if (it) {
-                    binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CUSTOM
-                    binding.tilSearch.endIconDrawable = getProgressBarDrawable()
-                    (binding.tilSearch.endIconDrawable as? Animatable)?.start()
-                } else {
-                    (binding.tilSearch.endIconDrawable as? Animatable)?.stop()
-                    binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CLEAR_TEXT
-                    binding.tilSearch.endIconDrawable = ContextCompat.getDrawable(this, R.drawable.ic_clear_black_24dp)
-                }
+                setSearchEndIcon(it)
             }
         })
         viewModel.searchResultList.observe(this, Observer {
@@ -110,6 +102,19 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
                 showToast(getString(it))
             }
         })
+    }
+
+    private fun setSearchEndIcon(isCustom: Boolean) {
+        if (isCustom) {
+            binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CUSTOM
+            binding.tilSearch.endIconDrawable = getProgressBarDrawable()
+            (binding.tilSearch.endIconDrawable as? Animatable)?.start()
+        } else {
+            (binding.tilSearch.endIconDrawable as? Animatable)?.stop()
+            binding.tilSearch.endIconMode = TextInputLayout.END_ICON_CLEAR_TEXT
+            binding.tilSearch.endIconDrawable =
+                ContextCompat.getDrawable(this, R.drawable.ic_clear_black_24dp)
+        }
     }
 
     private fun initThemeButton() {
@@ -139,11 +144,18 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
 
     private fun initSearch() {
         binding.tilSearch.endIconDrawable = getProgressBarDrawable()
-        binding.tilSearch.setEndIconTintList(ContextCompat.getColorStateList(this, R.color.color_search_end_icon_state))
+        binding.tilSearch.setEndIconTintList(
+            ContextCompat.getColorStateList(
+                this,
+                R.color.color_search_end_icon_state
+            )
+        )
 
         val eventsSearchDisposable = createTextChangeObservable()
             .debounce(300, TimeUnit.MILLISECONDS)
-            .filter { query -> ((query.isNotBlank()) || query.isEmpty()) }
+            .filter { query ->
+                (((query.isNotBlank()) || query.isEmpty()) && query != viewModel.searchQuery.value)
+            }
             .distinctUntilChanged()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ result ->
@@ -153,7 +165,7 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
                 processError(null)
             })
 
-        disposable?.add(eventsSearchDisposable)
+        disposable.add(eventsSearchDisposable)
     }
 
     private fun Context.getProgressBarDrawable(): Drawable {
@@ -164,7 +176,12 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
         val array = obtainStyledAttributes(progressBarStyle, attributes)
         val drawable = array.getDrawableOrThrow(0)
         array.recycle()
-        drawable.setTintList(ContextCompat.getColorStateList(this, R.color.color_search_end_icon_state))
+        drawable.setTintList(
+            ContextCompat.getColorStateList(
+                this,
+                R.color.color_search_end_icon_state
+            )
+        )
         return drawable
     }
 
@@ -174,7 +191,12 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
 
                 override fun afterTextChanged(s: Editable?) = Unit
 
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) = Unit
 
                 override fun onTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                     s?.toString()?.let {
