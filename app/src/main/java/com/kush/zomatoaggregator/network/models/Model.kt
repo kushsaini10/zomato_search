@@ -2,6 +2,7 @@ package com.kush.zomatoaggregator.network.models
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import java.util.*
 
 object Model {
     data class SearchResponse(
@@ -79,13 +80,20 @@ object Model {
     }
     data class SearchListItem(
         val itemType: Type = Type.RESTAURANT,
-        val id: Int = 0,
+        val id: String? = null,
         val name: String = "",
         val cuisine: String = "",
         val imageUrl: String? = null
     ) {
         enum class Type {
             CUISINE, RESTAURANT
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (other is SearchListItem) {
+                return id == other.id
+            }
+            return super.equals(other)
         }
     }
 }

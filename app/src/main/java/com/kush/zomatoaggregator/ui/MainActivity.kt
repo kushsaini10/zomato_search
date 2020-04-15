@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private var disposable: CompositeDisposable? = null
     private lateinit var networkHelper: NetworkHelper
     private var searchList: MutableList<Model.SearchListItem> = mutableListOf()
+    private lateinit var listHashMap: HashMap<String, HashSet<Model.SearchListItem>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +50,7 @@ class MainActivity : AppCompatActivity() {
     private fun initVariables() {
         disposable = CompositeDisposable()
         networkHelper = NetworkHelper(this)
+        listHashMap = hashMapOf()
     }
 
     private fun initViews() {
@@ -104,10 +107,15 @@ class MainActivity : AppCompatActivity() {
         response?.let {
             searchList.clear()
             it.restaurants?.forEach { restaurantsItem ->
+                Log.d("TAG", "${restaurantsItem?.restaurant?.name} : ${restaurantsItem?.restaurant?.id}")
                 restaurantsItem?.restaurant?.let {restaurantData ->
                     val parsedCuisines = addUniqueCuisines(restaurantData.cuisines)
                     addRestaurantToCuisineGroup(restaurantData, parsedCuisines)
                 }
+            }
+            listHashMap.entries.forEach { entry ->
+                searchList.add(Model.SearchListItem(itemType = Model.SearchListItem.Type.CUISINE, cuisine = entry.key))
+                searchList.addAll(entry.value)
             }
         }
         binding.rvSearch.adapter?.notifyDataSetChanged()
@@ -125,67 +133,32 @@ class MainActivity : AppCompatActivity() {
         parsedCuisines: List<String>?
     ) {
         if (parsedCuisines.isNullOrEmpty()) {
-            addCuisineToOther(restaurantData)
+            addCuisineAndRestaurant(otherCuisine, restaurantData)
         } else {
             parsedCuisines.forEach { cuisine ->
-                val cuisineIndex =
-                    searchList.indexOfLast { item -> item.cuisine == cuisine }
-                if (cuisineIndex == -1) {
-                    searchList.add(
-                        Model.SearchListItem(
-                            itemType = Model.SearchListItem.Type.CUISINE,
-                            cuisine = cuisine
-                        )
-                    )
-                    searchList.add(
-                        Model.SearchListItem(
-                            itemType = Model.SearchListItem.Type.RESTAURANT,
-                            name = restaurantData.name ?: "",
-                            cuisine = cuisine,
-                            imageUrl = restaurantData.thumb
-                        )
-                    )
-                } else {
-                    searchList.add(
-                        cuisineIndex + 1, Model.SearchListItem(
-                            itemType = Model.SearchListItem.Type.RESTAURANT,
-                            name = restaurantData.name ?: "",
-                            cuisine = otherCuisine,
-                            imageUrl = restaurantData.thumb
-                        )
-                    )
-                }
+                addCuisineAndRestaurant(cuisine, restaurantData)
             }
         }
     }
 
-    private fun addCuisineToOther(restaurantData: Model.SearchResponse.Restaurant) {
-        val findLast = searchList.indexOfLast { item -> item.cuisine == otherCuisine }
-        if (findLast == -1) {
-            searchList.add(
-                Model.SearchListItem(
-                    itemType = Model.SearchListItem.Type.CUISINE,
-                    cuisine = otherCuisine
-                )
-            )
-            searchList.add(
-                Model.SearchListItem(
-                    itemType = Model.SearchListItem.Type.RESTAURANT,
-                    name = restaurantData.name ?: "",
-                    cuisine = otherCuisine,
-                    imageUrl = restaurantData.thumb
-                )
-            )
-        } else {
-            searchList.add(
-                findLast + 1, Model.SearchListItem(
-                    itemType = Model.SearchListItem.Type.RESTAURANT,
-                    name = restaurantData.name ?: "",
-                    cuisine = otherCuisine,
-                    imageUrl = restaurantData.thumb
-                )
-            )
+    private fun addCuisineAndRestaurant(
+        cuisine: String,
+        restaurantData: Model.SearchResponse.Restaurant
+    ) {
+        val restaurantHashSet =
+            listHashMap[cuisine]
+        if (restaurantHashSet == null) {
+            listHashMap[cuisine] = hashSetOf()
         }
+        listHashMap[cuisine]?.add(
+            Model.SearchListItem(
+                itemType = Model.SearchListItem.Type.RESTAURANT,
+                id = restaurantData.id,
+                name = restaurantData.name ?: "",
+                cuisine = cuisine,
+                imageUrl = restaurantData.thumb
+            )
+        )
     }
 
     private fun createTextChangeObservable(): Observable<String> {
