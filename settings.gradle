@@ -1,0 +1,2 @@
+rootProject.name='Zomato Aggregator'
+include ':app'
