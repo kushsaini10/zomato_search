@@ -1,8 +1,11 @@
 package com.kush.zomatoaggregator.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -20,6 +23,7 @@ import com.kush.zomatoaggregator.R
 import com.kush.zomatoaggregator.databinding.ActivitySearchBinding
 import com.kush.zomatoaggregator.network.NetworkHelper
 import com.kush.zomatoaggregator.network.models.Model
+import com.kush.zomatoaggregator.util.AdapterSearchItemActionsClickListener
 import com.kush.zomatoaggregator.util.Utils
 import com.kush.zomatoaggregator.util.showToast
 import io.reactivex.Observable
@@ -27,7 +31,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import java.util.concurrent.TimeUnit
 
-class SearchActivity : AppCompatActivity() {
+
+class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListener {
     private lateinit var binding: ActivitySearchBinding
     private lateinit var viewModelFactory: SearchViewModelProviderFactory
     private lateinit var viewModel: SearchViewModel
@@ -47,8 +52,19 @@ class SearchActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        disposable?.clear()
+        disposable.clear()
         super.onDestroy()
+    }
+
+    override fun onMapClicked(itemPosition: Int) {
+        val gmmIntentUri =
+            Uri.parse("geo:${searchList[itemPosition].latitude},${searchList[itemPosition].longitude}?z=18&q=${searchList[itemPosition].name}")
+        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+        try {
+            startActivity(mapIntent)
+        }catch (error: ActivityNotFoundException) {
+            showToast("No app found to resolve this action.")
+        }
     }
 
     private fun initVariables() {
@@ -114,7 +130,7 @@ class SearchActivity : AppCompatActivity() {
     private fun initList() {
         binding.rvSearch.apply {
             layoutManager = LinearLayoutManager(this@SearchActivity, RecyclerView.VERTICAL, false)
-            adapter = SearchListAdapter(this@SearchActivity, searchList)
+            adapter = SearchListAdapter(this@SearchActivity, searchList, this@SearchActivity)
         }
         binding.btnTop.setOnClickListener {
             binding.rvSearch.smoothScrollToPosition(0)

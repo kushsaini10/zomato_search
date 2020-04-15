@@ -5,7 +5,8 @@
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
     app:cardUseCompatPadding="true"
-    app:contentPadding="16dp">
+    app:contentPadding="16dp"
+    tools:showIn="@layout/activity_search">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -21,13 +22,55 @@
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tv_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:maxLines="1"
+            android:ellipsize="end"
             tools:text="Gulab Restaurant"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-            android:layout_marginStart="16dp"
             app:layout_constraintStart_toEndOf="@id/iv_image"
+            app:layout_constraintEnd_toStartOf="@id/btnMap"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_locality"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="New Delhi"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            app:layout_constraintStart_toStartOf="@id/tv_name"
+            app:layout_constraintEnd_toEndOf="@id/tv_name"
+            app:layout_constraintTop_toBottomOf="@id/tv_name" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_avg_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:text="Rs. 200 for "
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            android:drawableEnd="@drawable/ic_people_black_24dp"
+            android:drawablePadding="4dp"
+            app:layout_constraintStart_toStartOf="@id/tv_name"
+            app:layout_constraintTop_toBottomOf="@id/tv_locality" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnMap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:padding="8dp"
+            app:srcCompat="@drawable/ic_google_maps_icon"
+            android:background="?selectableItemBackgroundBorderless"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

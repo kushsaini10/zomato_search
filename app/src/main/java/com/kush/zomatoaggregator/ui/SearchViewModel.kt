@@ -67,10 +67,6 @@ class SearchViewModel(
             val searchList: MutableList<Model.SearchListItem> = mutableListOf()
             listHashMap.clear()
             it.restaurants?.forEach { restaurantsItem ->
-                Log.d(
-                    "TAG",
-                    "${restaurantsItem?.restaurant?.name} : ${restaurantsItem?.restaurant?.id}"
-                )
                 restaurantsItem?.restaurant?.let { restaurantData ->
                     val parsedCuisines = addUniqueCuisines(restaurantData.cuisines)
                     addRestaurantToCuisineGroup(restaurantData, parsedCuisines)
@@ -126,7 +122,13 @@ class SearchViewModel(
                 id = restaurantData.id,
                 name = restaurantData.name ?: "",
                 cuisine = cuisine,
-                imageUrl = restaurantData.thumb
+                imageUrl = restaurantData.thumb,
+                averageCostForTwo = restaurantData.averageCostForTwo,
+                currency = restaurantData.currency,
+                locality = restaurantData.location?.locality,
+                city = restaurantData.location?.city,
+                latitude = restaurantData.location?.latitude,
+                longitude = restaurantData.location?.longitude
             )
         )
     }

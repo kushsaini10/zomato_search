@@ -11,7 +11,7 @@
     <color name="color_secondary_variant">#0276bc</color>
 
     <color name="color_background">#2D2D2D</color>
-    <color name="color_surface">#585858</color>
+    <color name="color_surface">#323232</color>
     <color name="color_error">#d13737</color>
 
     <color name="color_on_primary">#ffffff</color>

@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/MyTheme.DayNight">
-        <activity android:name=".ui.SearchActivity">
+        <activity android:name=".ui.SearchActivity"
+            android:theme="@style/MyTheme.DayNight">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

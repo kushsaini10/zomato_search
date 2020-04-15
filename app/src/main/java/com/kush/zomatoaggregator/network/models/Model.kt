@@ -66,16 +66,20 @@ object Model {
         data class Location(
 
             @Expose
-            @SerializedName("address")
-            val address: String? = null,
+            @SerializedName("latitude")
+            val latitude: String? = null,
+
+            @Expose
+            @SerializedName("locality")
+            val locality: String? = null,
 
             @Expose
             @SerializedName("city")
             val city: String? = null,
 
             @Expose
-            @SerializedName("locality")
-            val locality: String? = null
+            @SerializedName("longitude")
+            val longitude: String? = null
         )
     }
     data class SearchListItem(
@@ -83,7 +87,13 @@ object Model {
         val id: String? = null,
         val name: String = "",
         val cuisine: String = "",
-        val imageUrl: String? = null
+        val averageCostForTwo: Int? = null,
+        val currency: String? = null,
+        val imageUrl: String? = null,
+        val locality: String? = null,
+        val city: String? = null,
+        val latitude: String? = null,
+        val longitude: String? = null
     ) {
         enum class Type {
             CUISINE, RESTAURANT
