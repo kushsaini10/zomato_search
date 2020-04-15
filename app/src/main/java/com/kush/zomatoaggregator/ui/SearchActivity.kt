@@ -92,9 +92,7 @@ class SearchActivity : AppCompatActivity(), AdapterSearchItemActionsClickListene
         })
         viewModel.searchResultList.observe(this, Observer {
             it?.let {
-                searchList.clear()
-                searchList.addAll(it)
-                binding.rvSearch.adapter?.notifyDataSetChanged()
+                (binding.rvSearch.adapter as? SearchListAdapter)?.setData(it)
             }
         })
         viewModel.errorMessage.observe(this, Observer {

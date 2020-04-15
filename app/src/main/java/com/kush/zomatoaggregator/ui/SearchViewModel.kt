@@ -49,6 +49,7 @@ class SearchViewModel(
                 }, { throwable ->
                     throwable.printStackTrace()
                     errorMessage.value = R.string.text_common_processing_error
+                    isSearching.value = false
                 })
         }
     }

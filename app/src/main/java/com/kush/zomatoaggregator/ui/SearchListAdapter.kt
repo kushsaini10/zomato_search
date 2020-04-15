@@ -2,10 +2,10 @@ package com.kush.zomatoaggregator.ui
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.kush.zomatoaggregator.R
@@ -20,6 +20,7 @@ class SearchListAdapter(
     private val searchList: MutableList<Model.SearchListItem>,
     private val onActionsClickListener: AdapterSearchItemActionsClickListener
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             Model.SearchListItem.Type.CUISINE.ordinal -> {
@@ -28,7 +29,8 @@ class SearchListAdapter(
                         LayoutInflater.from(context),
                         parent,
                         false
-                    ))
+                    )
+                )
             }
             else -> {
                 SearchResultViewHolder(
@@ -36,7 +38,8 @@ class SearchListAdapter(
                         LayoutInflater.from(context),
                         parent,
                         false
-                    )).apply {
+                    )
+                ).apply {
                     this.binding.btnMap.setOnClickListener {
                         onActionsClickListener.onMapClicked(adapterPosition)
                     }
@@ -55,9 +58,13 @@ class SearchListAdapter(
         val searchListItem = searchList[position]
         when (holder) {
             is SearchResultViewHolder -> {
-                searchListItem.imageUrl?.let {
+                if (searchListItem.imageUrl.isNullOrBlank()) {
                     GlideApp.with(context)
-                        .load(Uri.parse(it))
+                        .load(R.drawable.ic_placeholder)
+                        .into(holder.binding.ivImage)
+                } else {
+                    GlideApp.with(context)
+                        .load(Uri.parse(searchListItem.imageUrl))
                         .placeholder(R.drawable.ic_placeholder)
                         .transform(RoundedCorners(8))
                         .into(holder.binding.ivImage)
@@ -71,8 +78,13 @@ class SearchListAdapter(
                 holder.binding.tvAvgPrice.isVisible =
                     searchListItem.averageCostForTwo != null &&
                             searchListItem.averageCostForTwo != 0
-                holder.binding.tvAvgPrice.text = context.getString(R.string.text_restaturant_price, searchListItem.currency, searchListItem.averageCostForTwo)
-                holder.binding.btnMap.isVisible = !searchListItem.latitude.isNullOrBlank() && !searchListItem.latitude.isNullOrBlank()
+                holder.binding.tvAvgPrice.text = context.getString(
+                    R.string.text_restaturant_price,
+                    searchListItem.currency,
+                    searchListItem.averageCostForTwo
+                )
+                holder.binding.btnMap.isVisible =
+                    !searchListItem.latitude.isNullOrBlank() && !searchListItem.latitude.isNullOrBlank()
             }
             is SearchCuisineViewHolder -> {
                 holder.binding.tvName.text = searchListItem.cuisine
@@ -80,10 +92,18 @@ class SearchListAdapter(
         }
     }
 
-    class SearchResultViewHolder(var binding: SearchResultItemBinding):
+    fun setData(newSearchList: MutableList<Model.SearchListItem>) {
+        val diffCallback = SearchResultDiffCallback(searchList, newSearchList)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        searchList.clear()
+        searchList.addAll(newSearchList)
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    class SearchResultViewHolder(var binding: SearchResultItemBinding) :
         RecyclerView.ViewHolder(binding.root)
 
-    class SearchCuisineViewHolder(var binding: SearchCuisineItemBinding):
+    class SearchCuisineViewHolder(var binding: SearchCuisineItemBinding) :
         RecyclerView.ViewHolder(binding.root)
 
 }
